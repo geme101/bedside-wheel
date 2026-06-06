@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+</head>
+<body>
+
+<h2>Admin Panel</h2>
+
+<input type="password" id="pass" placeholder="Enter password">
+<button onclick="login()">Login</button>
+
+<div id="panel" style="display:none;">
+  <h3>Assignments</h3>
+  <pre id="list"></pre>
+
+  <button onclick="copyList()">Copy for Telegram</button>
+  <button onclick="resetAll()">RESET ALL</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCYXXF9oJqv2Hs8gn6u6ywnYvMICbrQtvs",
+  authDomain: "bedside-wheel.firebaseapp.com",
+  projectId: "bedside-wheel",
+  storageBucket: "bedside-wheel.firebasestorage.app",
+  messagingSenderId: "636300132842",
+  appId: "1:636300132842:web:79b5ba3bbd528ccf73b293"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const PASSWORD = "admin123";
+
+function login(){
+  const p = document.getElementById("pass").value;
+  if(p === PASSWORD){
+    document.getElementById("panel").style.display = "block";
+    loadData();
+  } else {
+    alert("Wrong password");
+  }
+}
+
+async function loadData(){
+  const snap = await db.collection("assignments").get();
+  let text = "";
+
+  snap.forEach(doc => {
+    text += doc.id + " - " + doc.data().value + "\n";
+  });
+
+  document.getElementById("list").innerText = text;
+}
+
+async function copyList(){
+  const text = document.getElementById("list").innerText;
+  await navigator.clipboard.writeText(text);
+  alert("Copied!");
+}
+
+async function resetAll(){
+  if(!confirm("Are you sure? This deletes everything.")) return;
+
+  const snap = await db.collection("assignments").get();
+  snap.forEach(doc => doc.ref.delete());
+
+  await db.collection("system").doc("pool").delete();
+
+  alert("Reset done!");
+  loadData();
+}
+</script>
+
+</body>
+</html>
